@@ -123,6 +123,8 @@ The file is used to update the existing stack on the cloudformation and also rec
 ![image](https://user-images.githubusercontent.com/3264417/213684623-99ad0973-b395-4a4f-86de-1c07277e22a1.png)
 
 
+3. DNS URL for review 
+http://proje-WebAp-OHSOYM6EE9K3-2143538223.us-west-2.elb.amazonaws.com
 
 # Thank You
 
