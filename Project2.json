@@ -1,0 +1,29 @@
+[
+    {
+      "ParameterKey": "MyVPCCidrBlockRange",
+      "ParameterValue": "10.0.0.0/16"
+    },
+   {
+      "ParameterKey": "EnvironmentName",
+      "ParameterValue": "Project2"
+   },
+   {
+    "ParameterKey": "MyPrivateSubnet1CidrBlockRange",
+    "ParameterValue": "10.0.1.0/24"
+   },
+   {
+      "ParameterKey": "MyPrivateSubnet2CidrBlockRange",
+      "ParameterValue": "10.0.2.0/24"
+   },
+   {
+    "ParameterKey": "MyPublicSubnet1CidrBlockRange",
+    "ParameterValue": "10.0.3.0/24"
+    
+   },
+   {
+      "ParameterKey": "MyPublicSubnet2CidrBlockRange",
+      "ParameterValue": "10.0.4.0/24"
+      
+   }
+  
+]

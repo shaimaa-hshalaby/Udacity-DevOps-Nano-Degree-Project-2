@@ -1,0 +1,324 @@
+Parameters:
+
+    EnvironmentName:
+        Description: it is the environment name
+        Type: String
+
+    MyVPCCidrBlockRange:
+        Description: it is the ip range of VPC cidrBlock
+        Type: String
+
+    MyPrivateSubnet1CidrBlockRange:
+        Description: it is the ip range of private subnet 1
+        Type: String
+
+    MyPrivateSubnet2CidrBlockRange:
+        Description: it is the ip range of private subnet 2
+        Type: String
+
+    MyPublicSubnet1CidrBlockRange:
+        Description: it is the ip range of public subnet 1
+        Type: String
+
+    MyPublicSubnet2CidrBlockRange:
+        Description: it is the ip range of public subnet 2
+        Type: String
+
+Resources:
+    MyVPC:
+        Type: AWS::EC2::VPC
+        Properties: 
+          CidrBlock: !Ref MyVPCCidrBlockRange
+          EnableDnsHostnames: true
+          Tags: 
+            - Key: Name
+              Value: !Sub ${EnvironmentName} VPC
+
+    MyInternetGateway:
+        Type: AWS::EC2::InternetGateway
+        Properties:
+          Tags:
+          - Key: Name
+            Value: !Sub ${EnvironmentName} Internet Getway
+
+    MyAttachGateway:    
+        Type: AWS::EC2::VPCGatewayAttachment
+        Properties: 
+          InternetGatewayId: !Ref MyInternetGateway
+          VpcId: !Ref MyVPC
+
+    MyPrivateSubnet1 :   
+      Type: AWS::EC2::Subnet
+      Properties: 
+        VpcId: !Ref MyVPC
+        AvailabilityZone: !Select [0, !GetAZs '']
+        CidrBlock: !Ref MyPrivateSubnet1CidrBlockRange
+        MapPublicIpOnLaunch: false
+        Tags: 
+          - Key: name
+            Value: !Sub ${EnvironmentName} Private Subnet1
+
+    MyPrivateSubnet2 :   
+      Type: AWS::EC2::Subnet
+      Properties: 
+        VpcId: !Ref MyVPC
+        AvailabilityZone: !Select [1, !GetAZs '']
+        CidrBlock: !Ref MyPrivateSubnet2CidrBlockRange
+        MapPublicIpOnLaunch: false
+        Tags: 
+          - Key: name
+            Value: !Sub ${EnvironmentName} Private Subnet2
+
+    MyPublicSubnet1 :   
+      Type: AWS::EC2::Subnet
+      Properties: 
+        VpcId: !Ref MyVPC
+        AvailabilityZone: !Select [0, !GetAZs '']
+        CidrBlock: !Ref MyPublicSubnet1CidrBlockRange
+        MapPublicIpOnLaunch: true
+        Tags: 
+          - Key: name
+            Value: !Sub ${EnvironmentName} Public Subnet1
+
+    MyPublicSubnet2 :   
+      Type: AWS::EC2::Subnet
+      Properties: 
+        VpcId: !Ref MyVPC
+        AvailabilityZone: !Select [1, !GetAZs '']
+        CidrBlock: !Ref MyPublicSubnet2CidrBlockRange
+        MapPublicIpOnLaunch: true
+        Tags: 
+          - Key: name
+            Value: !Sub ${EnvironmentName} Public Subnet1
+
+    MyNatGatewayEIPZ1:
+      Type: AWS::EC2::EIP
+      DependsOn: MyAttachGateway
+      Properties: 
+          Domain: vpc
+
+    MyNATGatewayZ1:
+      Type: AWS::EC2::NatGateway
+      Properties:
+          AllocationId: !GetAtt MyNatGatewayEIPZ1.AllocationId
+          SubnetId: !Ref MyPublicSubnet1
+          Tags:
+          - Key: name
+            Value: !Sub ${EnvironmentName} NatGateway(Z1)
+    
+    MyNatGatewayEIPZ2:
+      Type: AWS::EC2::EIP
+      DependsOn: MyAttachGateway
+      Properties: 
+          Domain: vpc
+
+    MyNATGatewayZ2:
+      Type: AWS::EC2::NatGateway
+      Properties:
+          AllocationId: !GetAtt MyNatGatewayEIPZ2.AllocationId
+          SubnetId: !Ref MyPublicSubnet2
+          Tags:
+          - Key: name
+            Value: !Sub ${EnvironmentName} NatGateway(Z2)
+
+
+    MyPublicRouteTable:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:  !Ref MyVPC
+        Tags:
+        - Key: name
+          Value: !Sub ${EnvironmentName} Public Route Table
+
+    MyPublicRoute:
+      Type: AWS::EC2::Route
+      Properties: 
+        DestinationCidrBlock: 0.0.0.0/0
+        GatewayId: !Ref MyInternetGateway
+        RouteTableId: !Ref MyPublicRouteTable
+
+    MyPublicSubnetRouteTableAssociationZ1:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref MyPublicSubnet1
+        RouteTableId: !Ref MyPublicRouteTable
+
+
+    MyPublicSubnetRouteTableAssociationZ2:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref MyPublicSubnet2
+        RouteTableId: !Ref MyPublicRouteTable
+
+    MyPrivateRouteTableZ1:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:  !Ref MyVPC
+        Tags:
+        - Key: name
+          Value: !Sub ${EnvironmentName} Private Route Table (Z1)
+
+    RouteNATGatewayZ1:
+      DependsOn: MyNATGatewayZ1
+      Type: AWS::EC2::Route
+      Properties:
+          RouteTableId: !Ref MyPrivateRouteTableZ1
+          DestinationCidrBlock: '0.0.0.0/0'
+          NatGatewayId: !Ref MyNATGatewayZ1
+
+    MyPrivateSubnetRouteTableAssociationZ1:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref MyPrivateSubnet1
+        RouteTableId: !Ref MyPrivateRouteTableZ1
+
+    MyPrivateRouteTableZ2:
+      Type: AWS::EC2::RouteTable
+      Properties:
+        VpcId:  !Ref MyVPC
+        Tags:
+        - Key: name
+          Value: !Sub ${EnvironmentName} Private Route Table (Z2)
+
+    RouteNATGatewayZ2:
+      DependsOn: MyNATGatewayZ2
+      Type: AWS::EC2::Route
+      Properties:
+          RouteTableId: !Ref MyPrivateRouteTableZ2
+          DestinationCidrBlock: '0.0.0.0/0'
+          NatGatewayId: !Ref MyNATGatewayZ2
+
+    MyPrivateSubnetRouteTableAssociationZ2:
+      Type: AWS::EC2::SubnetRouteTableAssociation
+      Properties:
+        SubnetId: !Ref MyPrivateSubnet2
+        RouteTableId: !Ref MyPrivateRouteTableZ2
+
+
+    MyLoadBalancerSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Allow http to our load balancer
+        VpcId: !Ref MyVPC
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+    WebServerSecGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Allow http to our hosts and SSH from local only
+        VpcId: !Ref MyVPC
+        SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 0
+          ToPort: 65535
+          CidrIp: 0.0.0.0/0
+          
+    myWebAppLaunchConfiguration:
+      Type: AWS::AutoScaling::LaunchConfiguration
+      Properties: 
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            sudo apt-get update -y
+            sudo apt-get install apache2 -y
+            sudo systemctl start apache2.service
+            cd /var/www/html
+            echo "<h1>it works! Udagram, Udacity</h1><br> Shaimaa Shalaby" > index.html
+        ImageId: ami-0135afc6d226a70a4
+        #KeyName: VocareumKey2  #key name is not exist
+        SecurityGroups:
+          - !Ref WebServerSecGroup
+        InstanceType: t2.medium
+        BlockDeviceMappings:
+        - DeviceName: "/dev/sdk"
+          Ebs:
+            VolumeSize: 10
+
+    MyAutoScallingTargetGroup:
+      Type: AWS::ElasticLoadBalancingV2::TargetGroup
+      Properties: 
+        HealthCheckEnabled: true
+        HealthCheckIntervalSeconds: 10
+        HealthCheckPath: /
+      # HealthCheckPort: String
+        HealthCheckProtocol: HTTP
+        HealthCheckTimeoutSeconds: 8
+        HealthyThresholdCount: 2
+        Port: 80
+        Protocol: HTTP
+        UnhealthyThresholdCount: 5
+        VpcId: !Ref MyVPC
+
+    WebAppGroup:
+      Type: AWS::AutoScaling::AutoScalingGroup
+      Properties:
+        VPCZoneIdentifier: 
+          - !Ref MyPrivateSubnet1
+          - !Ref MyPrivateSubnet2
+        LaunchConfigurationName: !Ref myWebAppLaunchConfiguration
+        MinSize: '4'
+        MaxSize: '4'
+        TargetGroupARNs:
+        - !Ref MyAutoScallingTargetGroup
+
+    WebAppLB:
+      Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+      Properties:
+        Subnets:
+        - !Ref MyPublicSubnet1
+        - !Ref MyPublicSubnet2
+        SecurityGroups:
+        - !Ref  MyLoadBalancerSecurityGroup
+
+    Listener:
+      Type: AWS::ElasticLoadBalancingV2::Listener
+      Properties:
+        DefaultActions:
+        - Type: forward
+          TargetGroupArn:
+            !Ref MyAutoScallingTargetGroup
+        LoadBalancerArn:
+          !Ref WebAppLB
+        Port: 80
+        Protocol: HTTP
+    ALBListenerRule:
+        Type: AWS::ElasticLoadBalancingV2::ListenerRule
+        Properties:
+          Actions:
+          - Type: forward
+            TargetGroupArn: !Ref MyAutoScallingTargetGroup
+          Conditions:
+          - Field: path-pattern
+            Values: [/]
+          ListenerArn: !Ref 'Listener'
+          Priority: 1
+
+Outputs:
+  LBDNS:
+    Description: Load Balancer DNS
+    Value: 
+      !Join [ "", [ "http://",!GetAtt WebAppLB.DNSName ] ]
+    Export:
+      Name: !Sub ${EnvironmentName}-LBDNS
+
+
+
+           
