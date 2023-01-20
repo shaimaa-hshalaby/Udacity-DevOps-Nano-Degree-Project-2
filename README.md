@@ -110,4 +110,21 @@ The file is used to run the script of creating cloudformation stack, you should 
 The file is used to update the existing stack on the cloudformation and also recieve 3 paramaters as the creat.sh file
 
 
+--------------------------------
+## Outputs
+
+1. After running the project.yml, you will find the DNS URL as an output of the stack as follows:
+
+![image](https://user-images.githubusercontent.com/3264417/213684282-00f8862c-0ae7-4fc6-b2ff-b1cdf5d98d34.png)
+
+
+2. After navigating to the Load Balancer DNS, the index file will be displayed as follows:
+
+![image](https://user-images.githubusercontent.com/3264417/213684623-99ad0973-b395-4a4f-86de-1c07277e22a1.png)
+
+
+
+# Thank You
+
+
 
