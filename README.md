@@ -87,7 +87,7 @@ The file contains the required Paramater to run the YAML template file
     Description: it is the ip range of public subnet 1
     Type: String
 
-** MyPublicSubnet2CidrBlockRange:**
+**MyPublicSubnet2CidrBlockRange:**
 
     Description: it is the ip range of public subnet 2
     Type: String
